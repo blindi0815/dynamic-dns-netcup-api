@@ -92,19 +92,36 @@ function initializeCurlHandlerPostNetcupAPI($request)
     return $ch;
 }
 
-// Create cURL handler for get requests (for getting the current public IP)
-function initializeCurlHandlerGetIP($url)
+// Create cURL handler for get requests (for getting the current public IPv4)
+function initializeCurlHandlerGetIPv4($url)
 {
     $ch = curl_init($url);
     $curlOptions = array(
         CURLOPT_USERAGENT => USERAGENT,
         CURLOPT_TIMEOUT => 30,
         CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_FAILONERROR => 1
+        CURLOPT_FAILONERROR => 1,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4
     );
     curl_setopt_array($ch, $curlOptions);
     return $ch;
 }
+
+// Create cURL handler for get requests (for getting the current public IPv6)
+function initializeCurlHandlerGetIPv6($url)
+{
+    $ch = curl_init($url);
+    $curlOptions = array(
+        CURLOPT_USERAGENT => USERAGENT,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_RETURNTRANSFER => 1,
+        CURLOPT_FAILONERROR => 1,
+        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V6
+    );
+    curl_setopt_array($ch, $curlOptions);
+    return $ch;
+}
+
 
 // Check if curl request was successful
 function wasCurlSuccessful($ch)
@@ -300,7 +317,7 @@ function getCurrentPublicIPv4()
     outputStdout('Getting IPv4 address from ' . IPV4_ADDRESS_URL . '.');
 
     $url = IPV4_ADDRESS_URL;
-    $ch = initializeCurlHandlerGetIP($url);
+    $ch = initializeCurlHandlerGetIPv4($url);
     $publicIP = trim(curl_exec($ch));
 
     if (!wasCurlSuccessful($ch) || !isIPV4Valid($publicIP)) {
@@ -314,7 +331,7 @@ function getCurrentPublicIPv4()
         if (!isIPV4Valid($publicIP) || $publicIP === false) {
             outputWarning(IPV4_ADDRESS_URL . " didn't return a valid IPv4 address (Try $retryCount / $retryLimit). Trying fallback " . IPV4_ADDRESS_URL_FALLBACK);
             $url = IPV4_ADDRESS_URL_FALLBACK;
-            $ch = initializeCurlHandlerGetIP($url);
+            $ch = initializeCurlHandlerGetIPv4($url);
             $publicIP = trim(curl_exec($ch));
             if (!wasCurlSuccessful($ch) || !isIPV4Valid($publicIP)) {
                 $retryCount = 1;
@@ -347,7 +364,7 @@ function getCurrentPublicIPv6()
     outputStdout('Getting IPv6 address from ' . IPV6_ADDRESS_URL . '.');
 
     $url = IPV6_ADDRESS_URL;
-    $ch = initializeCurlHandlerGetIP($url);
+    $ch = initializeCurlHandlerGetIPv6($url);
     $publicIP = trim(curl_exec($ch));
 
     if (!wasCurlSuccessful($ch) || !isIPV6Valid($publicIP)) {
@@ -361,7 +378,7 @@ function getCurrentPublicIPv6()
         if (!isIPV6Valid($publicIP) || $publicIP === false) {
             outputWarning(IPV6_ADDRESS_URL . " didn't return a valid IPv6 address (Try $retryCount / $retryLimit). Trying fallback " . IPV6_ADDRESS_URL_FALLBACK);
             $url = IPV6_ADDRESS_URL_FALLBACK;
-            $ch = initializeCurlHandlerGetIP($url);
+            $ch = initializeCurlHandlerGetIPv6($url);
             $publicIP = trim(curl_exec($ch));
             if (!wasCurlSuccessful($ch) || !isIPV6Valid($publicIP)) {
                 $retryCount = 1;
@@ -554,3 +571,4 @@ function updateDnsRecords($domainname, $customernr, $apikey, $apisessionid, $dns
     outputStderr(sprintf("Error while updating DNS Records: %s Exiting.", $result['longmessage']));
     return false;
 }
+
